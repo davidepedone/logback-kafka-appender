@@ -4,7 +4,8 @@
     <groupId>ch.davidepedone</groupId>
     <artifactId>logback-kafka-appender</artifactId>
     <version>0.3.1-SNAPSHOT</version>
-
+    <name>Logback kafka appender</name>
+    <description>Logback kafka appender</description>
     <url>https://github.com/davidepedone/logback-kafka-appender</url>
     <licenses>
         <license>
