@@ -55,31 +55,31 @@ This is an example `logback.xml` that uses a common `PatternLayout` to encode a 
     </appender>
 
     <!-- This is the kafkaAppender -->
-    <appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
-            <encoder>
-                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-            </encoder>
-            <topic>logs</topic>
-            <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
-            <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
-            
-            <!-- Optional parameter to use a fixed partition -->
-            <!-- <partition>0</partition> -->
-            
-            <!-- Optional parameter to include log timestamps into the kafka message -->
-            <!-- <appendTimestamp>true</appendTimestamp> -->
+    <appender name="kafkaAppender" class="ch.davidepedone.logback.kafka.KafkaAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <topic>logs</topic>
+        <keyingStrategy class="ch.davidepedone.logback.kafka.keying.NoKeyKeyingStrategy"/>
+        <deliveryStrategy class="ch.davidepedone.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
 
-            <!-- each <producerConfig> translates to regular kafka-client config (format: key=value) -->
-            <!-- producer configs are documented here: https://kafka.apache.org/documentation.html#newproducerconfigs -->
-            <!-- bootstrap.servers is the only mandatory producerConfig -->
-            <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+        <!-- Optional parameter to use a fixed partition -->
+        <!-- <partition>0</partition> -->
 
-            <!-- this is the fallback appender if kafka is not available. -->
-            <appender-ref ref="STDOUT" />
-        </appender>
+        <!-- Optional parameter to include log timestamps into the kafka message -->
+        <!-- <appendTimestamp>true</appendTimestamp> -->
+
+        <!-- each <producerConfig> translates to regular kafka-client config (format: key=value) -->
+        <!-- producer configs are documented here: https://kafka.apache.org/documentation.html#newproducerconfigs -->
+        <!-- bootstrap.servers is the only mandatory producerConfig -->
+        <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+
+        <!-- this is the fallback appender if kafka is not available. -->
+        <appender-ref ref="STDOUT"/>
+    </appender>
 
     <root level="info">
-        <appender-ref ref="kafkaAppender" />
+        <appender-ref ref="kafkaAppender"/>
     </root>
 </configuration>
 
@@ -113,21 +113,22 @@ In any case, if you want to make sure the appender will never block your applica
 An example configuration could look like this:
 
 ```xml
+
 <configuration>
 
     <!-- This is the kafkaAppender -->
-    <appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
-    <!-- Kafka Appender configuration -->
+    <appender name="kafkaAppender" class="ch.davidepedone.logback.kafka.KafkaAppender">
+        <!-- Kafka Appender configuration -->
     </appender>
 
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
         <!-- if neverBlock is set to true, the async appender discards messages when its internal queue is full -->
-        <neverBlock>true</neverBlock>  
-        <appender-ref ref="kafkaAppender" />
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaAppender"/>
     </appender>
 
     <root level="info">
-        <appender-ref ref="ASYNC" />
+        <appender-ref ref="ASYNC"/>
     </root>
 </configuration>
 
@@ -205,7 +206,8 @@ If none of the above keying strategies satisfies your requirements, you can easi
 
 ```java
 package foo;
-import com.github.danielwegener.logback.kafka.keying.KeyingStrategy;
+
+import ch.davidepedone.logback.kafka.keying.KeyingStrategy;
 
 /* This is a valid example but does not really make much sense */
 public class LevelKeyingStrategy implements KeyingStrategy<ILoggingEvent> {
