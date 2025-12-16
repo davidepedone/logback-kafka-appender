@@ -18,90 +18,107 @@ import static org.apache.kafka.clients.producer.ProducerConfig.*;
  */
 public abstract class KafkaAppenderConfig<E> extends UnsynchronizedAppenderBase<E> implements AppenderAttachable<E> {
 
-    protected String topic = null;
+	protected String topic = null;
 
-    protected Encoder<E> encoder = null;
-    protected KeyingStrategy<? super E> keyingStrategy = null;
-    protected DeliveryStrategy deliveryStrategy;
+	protected Encoder<E> encoder = null;
 
-    protected Integer partition = null;
+	protected KeyingStrategy<? super E> keyingStrategy = null;
 
-    protected boolean appendTimestamp = true;
+	protected DeliveryStrategy deliveryStrategy;
 
-    protected Map<String,Object> producerConfig = new HashMap<String, Object>();
+	protected Integer partition = null;
 
-    protected boolean checkPrerequisites() {
-        boolean errorFree = true;
+	protected boolean appendTimestamp = true;
 
-        if (producerConfig.get(BOOTSTRAP_SERVERS_CONFIG) == null) {
-            addError("No \"" + BOOTSTRAP_SERVERS_CONFIG + "\" set for the appender named [\""
-                    + name + "\"].");
-            errorFree = false;
-        }
+	protected final Map<String, Object> producerConfig = new HashMap<>();
 
-        if (topic == null) {
-            addError("No topic set for the appender named [\"" + name + "\"].");
-            errorFree = false;
-        }
+	protected boolean checkPrerequisites() {
+		boolean errorFree = true;
 
-        if (encoder == null) {
-            addError("No encoder set for the appender named [\"" + name + "\"].");
-            errorFree = false;
-        }
+		if (producerConfig.get(BOOTSTRAP_SERVERS_CONFIG) == null) {
+			addError("No \"" + BOOTSTRAP_SERVERS_CONFIG + "\" set for the appender named [\"" + name + "\"].");
+			errorFree = false;
+		}
 
-        if (keyingStrategy == null) {
-            addInfo("No explicit keyingStrategy set for the appender named [\"" + name + "\"]. Using default NoKeyKeyingStrategy.");
-            keyingStrategy = new NoKeyKeyingStrategy();
-        }
+		if (topic == null) {
+			addError("No topic set for the appender named [\"" + name + "\"].");
+			errorFree = false;
+		}
 
-        if (deliveryStrategy == null) {
-            addInfo("No explicit deliveryStrategy set for the appender named [\""+name+"\"]. Using default asynchronous strategy.");
-            deliveryStrategy = new AsynchronousDeliveryStrategy();
-        }
+		if (encoder == null) {
+			addError("No encoder set for the appender named [\"" + name + "\"].");
+			errorFree = false;
+		}
 
-        return errorFree;
-    }
+		if (keyingStrategy == null) {
+			addInfo("No explicit keyingStrategy set for the appender named [\"" + name
+					+ "\"]. Using default NoKeyKeyingStrategy.");
+			keyingStrategy = new NoKeyKeyingStrategy();
+		}
 
-    public void setEncoder(Encoder<E> encoder) {
-        this.encoder = encoder;
-    }
+		if (deliveryStrategy == null) {
+			addInfo("No explicit deliveryStrategy set for the appender named [\"" + name
+					+ "\"]. Using default asynchronous strategy.");
+			deliveryStrategy = new AsynchronousDeliveryStrategy();
+		}
 
-    public void setTopic(String topic) {
-        this.topic = topic;
-    }
+		if (producerConfig.get(KEY_SERIALIZER_CLASS_CONFIG) == null) {
+			addInfo("No explicit key.serializer set for the appender named [\"" + name
+					+ "\"]. Using default ByteArraySerializer.");
+			producerConfig.put(KEY_SERIALIZER_CLASS_CONFIG,
+					org.apache.kafka.common.serialization.ByteArraySerializer.class.getName());
+		}
 
-    public void setKeyingStrategy(KeyingStrategy<? super E> keyingStrategy) {
-        this.keyingStrategy = keyingStrategy;
-    }
+		if (producerConfig.get(VALUE_SERIALIZER_CLASS_CONFIG) == null) {
+			addInfo("No explicit value.serializer set for the appender named [\"" + name
+					+ "\"]. Using default ByteArraySerializer.");
+			producerConfig.put(VALUE_SERIALIZER_CLASS_CONFIG,
+					org.apache.kafka.common.serialization.ByteArraySerializer.class.getName());
+		}
 
-    public void addProducerConfig(String keyValue) {
-        String[] split = keyValue.split("=", 2);
-        if(split.length == 2)
-            addProducerConfigValue(split[0], split[1]);
-    }
+		return errorFree;
+	}
 
-    public void addProducerConfigValue(String key, Object value) {
-        this.producerConfig.put(key,value);
-    }
+	public void setEncoder(Encoder<E> encoder) {
+		this.encoder = encoder;
+	}
 
-    public Map<String, Object> getProducerConfig() {
-        return producerConfig;
-    }
+	public void setTopic(String topic) {
+		this.topic = topic;
+	}
 
-    public void setDeliveryStrategy(DeliveryStrategy deliveryStrategy) {
-        this.deliveryStrategy = deliveryStrategy;
-    }
+	public void setKeyingStrategy(KeyingStrategy<? super E> keyingStrategy) {
+		this.keyingStrategy = keyingStrategy;
+	}
 
-    public void setPartition(Integer partition) {
-        this.partition = partition;
-    }
+	public void addProducerConfig(String keyValue) {
+		String[] split = keyValue.split("=", 2);
+		if (split.length == 2)
+			addProducerConfigValue(split[0], split[1]);
+	}
 
-    public boolean isAppendTimestamp() {
-        return appendTimestamp;
-    }
+	public void addProducerConfigValue(String key, Object value) {
+		this.producerConfig.put(key, value);
+	}
 
-    public void setAppendTimestamp(boolean appendTimestamp) {
-        this.appendTimestamp = appendTimestamp;
-    }
+	public Map<String, Object> getProducerConfig() {
+		return producerConfig;
+	}
+
+	public void setDeliveryStrategy(DeliveryStrategy deliveryStrategy) {
+		this.deliveryStrategy = deliveryStrategy;
+	}
+
+	public void setPartition(Integer partition) {
+		this.partition = partition;
+	}
+
+	public boolean isAppendTimestamp() {
+		return appendTimestamp;
+	}
+
+	public void setAppendTimestamp(boolean appendTimestamp) {
+		this.appendTimestamp = appendTimestamp;
+	}
 
 }

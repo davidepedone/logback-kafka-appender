@@ -21,10 +21,10 @@
         </encoder>
         <topic>boring-logs</topic>
         <!-- we don't care how the log messages will be partitioned  -->
-        <keyingStrategy class="ch.davidepedone.logback.kafka.keying.NoKeyKeyingStrategy" />
+        <keyingStrategy class="ch.davidepedone.logback.kafka.keying.NoKeyKeyingStrategy"/>
 
         <!-- use async delivery. the application threads are not blocked by logging -->
-        <deliveryStrategy class="ch.davidepedone.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
+        <deliveryStrategy class="ch.davidepedone.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
 
         <!-- each <producerConfig> translates to regular kafka-client config (format: key=value) -->
         <!-- producer configs are documented here: https://kafka.apache.org/documentation.html#newproducerconfigs -->
@@ -43,6 +43,6 @@
     </appender>
 
     <root level="info">
-        <appender-ref ref="very-relaxed-and-fast-kafka-appender" />
+        <appender-ref ref="very-relaxed-and-fast-kafka-appender"/>
     </root>
 </configuration>

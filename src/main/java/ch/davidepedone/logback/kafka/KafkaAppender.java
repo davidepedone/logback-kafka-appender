@@ -6,10 +6,8 @@ import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.davidepedone.logback.kafka.delivery.FailedDeliveryCallback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,176 +18,181 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 
-    /**
-     * Kafka clients uses this prefix for its slf4j logging.
-     * This appender defers appends of any Kafka logs since it could cause harmful infinite recursion/self feeding effects.
-     */
-    private static final String KAFKA_LOGGER_PREFIX = KafkaProducer.class.getPackage().getName().replaceFirst("\\.producer$", "");
+	/**
+	 * Kafka clients uses this prefix for its slf4j logging. This appender defers appends
+	 * of any Kafka logs since it could cause harmful infinite recursion/self feeding
+	 * effects.
+	 */
+	private static final String KAFKA_LOGGER_PREFIX = KafkaProducer.class.getPackage()
+		.getName()
+		.replaceFirst("\\.producer$", "");
 
-    private LazyProducer lazyProducer = null;
-    private final AppenderAttachableImpl<E> aai = new AppenderAttachableImpl<E>();
-    private final ConcurrentLinkedQueue<E> queue = new ConcurrentLinkedQueue<E>();
-    private final FailedDeliveryCallback<E> failedDeliveryCallback = new FailedDeliveryCallback<E>() {
-        @Override
-        public void onFailedDelivery(E evt, Throwable throwable) {
-            aai.appendLoopOnAppenders(evt);
-        }
-    };
+	private LazyProducer lazyProducer = null;
 
-    public KafkaAppender() {
-        // setting these as config values sidesteps an unnecessary warning (minor bug in KafkaProducer)
-        addProducerConfigValue(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-        addProducerConfigValue(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-    }
+	private final AppenderAttachableImpl<E> aai = new AppenderAttachableImpl<>();
 
-    @Override
-    public void doAppend(E e) {
-        ensureDeferredAppends();
-        if (e instanceof ILoggingEvent && ((ILoggingEvent)e).getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
-            deferAppend(e);
-        } else {
-            super.doAppend(e);
-        }
-    }
+	private final ConcurrentLinkedQueue<E> queue = new ConcurrentLinkedQueue<>();
 
-    @Override
-    public void start() {
-        // only error free appenders should be activated
-        if (!checkPrerequisites()) return;
+	private final FailedDeliveryCallback<E> failedDeliveryCallback = (evt, throwable) -> aai.appendLoopOnAppenders(evt);
 
-        if (partition != null && partition < 0) {
-            partition = null;
-        }
+	@Override
+	public void doAppend(E e) {
+		ensureDeferredAppends();
+		if (e instanceof ILoggingEvent && ((ILoggingEvent) e).getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
+			deferAppend(e);
+		}
+		else {
+			super.doAppend(e);
+		}
+	}
 
-        lazyProducer = new LazyProducer();
+	@Override
+	public void start() {
+		// only error free appenders should be activated
+		if (!checkPrerequisites())
+			return;
 
-        super.start();
-    }
+		if (partition != null && partition < 0) {
+			partition = null;
+		}
 
-    @Override
-    public void stop() {
-        super.stop();
-        if (lazyProducer != null && lazyProducer.isInitialized()) {
-            try {
-                lazyProducer.get().close();
-            } catch (KafkaException e) {
-                this.addWarn("Failed to shut down kafka producer: " + e.getMessage(), e);
-            }
-            lazyProducer = null;
-        }
-    }
+		lazyProducer = new LazyProducer();
 
-    @Override
-    public void addAppender(Appender<E> newAppender) {
-        aai.addAppender(newAppender);
-    }
+		super.start();
+	}
 
-    @Override
-    public Iterator<Appender<E>> iteratorForAppenders() {
-        return aai.iteratorForAppenders();
-    }
+	@Override
+	public void stop() {
+		super.stop();
+		if (lazyProducer != null && lazyProducer.isInitialized()) {
+			try {
+				lazyProducer.get().close();
+			}
+			catch (KafkaException e) {
+				this.addWarn("Failed to shut down kafka producer: " + e.getMessage(), e);
+			}
+			lazyProducer = null;
+		}
+	}
 
-    @Override
-    public Appender<E> getAppender(String name) {
-        return aai.getAppender(name);
-    }
+	@Override
+	public void addAppender(Appender<E> newAppender) {
+		aai.addAppender(newAppender);
+	}
 
-    @Override
-    public boolean isAttached(Appender<E> appender) {
-        return aai.isAttached(appender);
-    }
+	@Override
+	public Iterator<Appender<E>> iteratorForAppenders() {
+		return aai.iteratorForAppenders();
+	}
 
-    @Override
-    public void detachAndStopAllAppenders() {
-        aai.detachAndStopAllAppenders();
-    }
+	@Override
+	public Appender<E> getAppender(String name) {
+		return aai.getAppender(name);
+	}
 
-    @Override
-    public boolean detachAppender(Appender<E> appender) {
-        return aai.detachAppender(appender);
-    }
+	@Override
+	public boolean isAttached(Appender<E> appender) {
+		return aai.isAttached(appender);
+	}
 
-    @Override
-    public boolean detachAppender(String name) {
-        return aai.detachAppender(name);
-    }
+	@Override
+	public void detachAndStopAllAppenders() {
+		aai.detachAndStopAllAppenders();
+	}
 
-    @Override
-    protected void append(E e) {
-        final byte[] payload = encoder.encode(e);
-        final byte[] key = keyingStrategy.createKey(e);
+	@Override
+	public boolean detachAppender(Appender<E> appender) {
+		return aai.detachAppender(appender);
+	}
 
-        final Long timestamp = isAppendTimestamp() ? getTimestamp(e) : null;
+	@Override
+	public boolean detachAppender(String name) {
+		return aai.detachAppender(name);
+	}
 
-        final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, partition, timestamp, key, payload);
+	@Override
+	protected void append(E e) {
+		final byte[] payload = encoder.encode(e);
+		final byte[] key = keyingStrategy.createKey(e);
 
-        final Producer<byte[], byte[]> producer = lazyProducer.get();
-        if (producer != null) {
-            deliveryStrategy.send(lazyProducer.get(), record, e, failedDeliveryCallback);
-        } else {
-            failedDeliveryCallback.onFailedDelivery(e, null);
-        }
-    }
+		final Long timestamp = isAppendTimestamp() ? getTimestamp(e) : null;
 
-    protected Long getTimestamp(E e) {
-        if (e instanceof ILoggingEvent) {
-            return ((ILoggingEvent) e).getTimeStamp();
-        } else {
-            return System.currentTimeMillis();
-        }
-    }
+		final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, partition, timestamp, key, payload);
 
-    protected Producer<byte[], byte[]> createProducer() {
-        return new KafkaProducer<>(new HashMap<>(producerConfig));
-    }
+		final Producer<byte[], byte[]> producer = lazyProducer.get();
+		if (producer != null) {
+			deliveryStrategy.send(lazyProducer.get(), record, e, failedDeliveryCallback);
+		}
+		else {
+			failedDeliveryCallback.onFailedDelivery(e, null);
+		}
+	}
 
-    private void deferAppend(E event) {
-        queue.add(event);
-    }
+	protected Long getTimestamp(E e) {
+		if (e instanceof ILoggingEvent) {
+			return ((ILoggingEvent) e).getTimeStamp();
+		}
+		else {
+			return System.currentTimeMillis();
+		}
+	}
 
-    // drains queue events to super
-    private void ensureDeferredAppends() {
-        E event;
+	protected Producer<byte[], byte[]> createProducer() {
+		return new KafkaProducer<>(new HashMap<>(producerConfig));
+	}
 
-        while ((event = queue.poll()) != null) {
-            super.doAppend(event);
-        }
-    }
+	private void deferAppend(E event) {
+		queue.add(event);
+	}
 
-    /**
-     * Lazy initializer for producer, patterned after commons-lang.
-     *
-     * @see <a href="https://commons.apache.org/proper/commons-lang/javadocs/api-3.4/org/apache/commons/lang3/concurrent/LazyInitializer.html">LazyInitializer</a>
-     */
-    private class LazyProducer {
+	// drains queue events to super
+	private void ensureDeferredAppends() {
+		E event;
 
-        private volatile Producer<byte[], byte[]> producer;
+		while ((event = queue.poll()) != null) {
+			super.doAppend(event);
+		}
+	}
 
-        public Producer<byte[], byte[]> get() {
-            Producer<byte[], byte[]> result = this.producer;
-            if (result == null) {
-                synchronized(this) {
-                    result = this.producer;
-                    if(result == null) {
-                        this.producer = result = this.initialize();
-                    }
-                }
-            }
+	/**
+	 * Lazy initializer for producer, patterned after commons-lang.
+	 *
+	 * @see <a href=
+	 * "https://commons.apache.org/proper/commons-lang/javadocs/api-3.4/org/apache/commons/lang3/concurrent/LazyInitializer.html">LazyInitializer</a>
+	 */
+	private class LazyProducer {
 
-            return result;
-        }
+		private volatile Producer<byte[], byte[]> producer;
 
-        protected Producer<byte[], byte[]> initialize() {
-            Producer<byte[], byte[]> producer = null;
-            try {
-                producer = createProducer();
-            } catch (Exception e) {
-                addError("error creating producer", e);
-            }
-            return producer;
-        }
+		public Producer<byte[], byte[]> get() {
+			Producer<byte[], byte[]> result = this.producer;
+			if (result == null) {
+				synchronized (this) {
+					result = this.producer;
+					if (result == null) {
+						this.producer = result = this.initialize();
+					}
+				}
+			}
 
-        public boolean isInitialized() { return producer != null; }
-    }
+			return result;
+		}
+
+		protected Producer<byte[], byte[]> initialize() {
+			Producer<byte[], byte[]> producer = null;
+			try {
+				producer = createProducer();
+			}
+			catch (Exception e) {
+				addError("error creating producer", e);
+			}
+			return producer;
+		}
+
+		public boolean isInitialized() {
+			return producer != null;
+		}
+
+	}
 
 }
