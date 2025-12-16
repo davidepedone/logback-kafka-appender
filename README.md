@@ -4,11 +4,12 @@
 > This project is no longer maintained (actually for some time now). I just do not find time to maintain this project in my free time. To make this clear I decided to better archive this project on github (and closing the unmoderated gitter channel) instead of just not reacting to new questions, issues and PRs. This may influence your decision to use this project although there still seem to be some happy users and stargazers.
 > I'll be happy to unarchive this project if someone is willing to take over maintenance or link to an active fork. 
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.danielwegener/logback-kafka-appender/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.danielwegener/logback-kafka-appender)
-
-[![Build master with Maven](https://github.com/danielwegener/logback-kafka-appender/actions/workflows/maven.yml/badge.svg)](https://github.com/danielwegener/logback-kafka-appender/actions/workflows/maven.yml)
-
-[![codecov](https://codecov.io/gh/danielwegener/logback-kafka-appender/branch/master/graph/badge.svg?token=qHPWPEAnGU)](https://codecov.io/gh/danielwegener/logback-kafka-appender)
+[![Maven Status](https://maven-badges.herokuapp.com/maven-central/ch.davidepedone/logback-kafka-appender/badge.svg?style=flat)](http://mvnrepository.com/artifact/ch.davidepedone/logback-kafka-appender)
+[![Java CI with Maven](https://github.com/davidepedone/logback-kafka-appender/actions/workflows/maven.yml/badge.svg)](https://github.com/davidepedone/logback-kafka-appender/actions/workflows/maven.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=davidepedone_logback-kafka-appender&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=davidepedone_logback-kafka-appender)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=davidepedone_logback-kafka-appender&metric=coverage)](https://sonarcloud.io/summary/new_code?id=davidepedone_logback-kafka-appender)
+[![Known Vulnerabilities](https://snyk.io/test/github/davidepedone/logback-kafka-appender/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/davidepedone/logback-kafka-appender?targetFile=pom.xml)
+[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 This appender lets your application publish its application logs directly to Apache Kafka.
 
@@ -55,31 +56,31 @@ This is an example `logback.xml` that uses a common `PatternLayout` to encode a 
     </appender>
 
     <!-- This is the kafkaAppender -->
-    <appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
-            <encoder>
-                <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-            </encoder>
-            <topic>logs</topic>
-            <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy" />
-            <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
-            
-            <!-- Optional parameter to use a fixed partition -->
-            <!-- <partition>0</partition> -->
-            
-            <!-- Optional parameter to include log timestamps into the kafka message -->
-            <!-- <appendTimestamp>true</appendTimestamp> -->
+    <appender name="kafkaAppender" class="ch.davidepedone.logback.kafka.KafkaAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <topic>logs</topic>
+        <keyingStrategy class="ch.davidepedone.logback.kafka.keying.NoKeyKeyingStrategy"/>
+        <deliveryStrategy class="ch.davidepedone.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
 
-            <!-- each <producerConfig> translates to regular kafka-client config (format: key=value) -->
-            <!-- producer configs are documented here: https://kafka.apache.org/documentation.html#newproducerconfigs -->
-            <!-- bootstrap.servers is the only mandatory producerConfig -->
-            <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+        <!-- Optional parameter to use a fixed partition -->
+        <!-- <partition>0</partition> -->
 
-            <!-- this is the fallback appender if kafka is not available. -->
-            <appender-ref ref="STDOUT" />
-        </appender>
+        <!-- Optional parameter to include log timestamps into the kafka message -->
+        <!-- <appendTimestamp>true</appendTimestamp> -->
+
+        <!-- each <producerConfig> translates to regular kafka-client config (format: key=value) -->
+        <!-- producer configs are documented here: https://kafka.apache.org/documentation.html#newproducerconfigs -->
+        <!-- bootstrap.servers is the only mandatory producerConfig -->
+        <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+
+        <!-- this is the fallback appender if kafka is not available. -->
+        <appender-ref ref="STDOUT"/>
+    </appender>
 
     <root level="info">
-        <appender-ref ref="kafkaAppender" />
+        <appender-ref ref="kafkaAppender"/>
     </root>
 </configuration>
 
@@ -113,21 +114,22 @@ In any case, if you want to make sure the appender will never block your applica
 An example configuration could look like this:
 
 ```xml
+
 <configuration>
 
     <!-- This is the kafkaAppender -->
-    <appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
-    <!-- Kafka Appender configuration -->
+    <appender name="kafkaAppender" class="ch.davidepedone.logback.kafka.KafkaAppender">
+        <!-- Kafka Appender configuration -->
     </appender>
 
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
         <!-- if neverBlock is set to true, the async appender discards messages when its internal queue is full -->
-        <neverBlock>true</neverBlock>  
-        <appender-ref ref="kafkaAppender" />
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="kafkaAppender"/>
     </appender>
 
     <root level="info">
-        <appender-ref ref="ASYNC" />
+        <appender-ref ref="ASYNC"/>
     </root>
 </configuration>
 
@@ -205,7 +207,8 @@ If none of the above keying strategies satisfies your requirements, you can easi
 
 ```java
 package foo;
-import com.github.danielwegener.logback.kafka.keying.KeyingStrategy;
+
+import ch.davidepedone.logback.kafka.keying.KeyingStrategy;
 
 /* This is a valid example but does not really make much sense */
 public class LevelKeyingStrategy implements KeyingStrategy<ILoggingEvent> {
