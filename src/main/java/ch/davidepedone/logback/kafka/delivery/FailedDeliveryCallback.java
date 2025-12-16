@@ -4,5 +4,7 @@ package ch.davidepedone.logback.kafka.delivery;
  * @since 0.0.1
  */
 public interface FailedDeliveryCallback<E> {
-    void onFailedDelivery(E evt, Throwable throwable);
+
+	void onFailedDelivery(E evt, Throwable throwable);
+
 }
