@@ -1,15 +1,15 @@
 <configuration>
 
-   <appender name="KafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+   <appender name="KafkaAppender" class="ch.davidepedone.logback.kafka.KafkaAppender">
        <encoder>
            <pattern>%msg</pattern>
        </encoder>
 
         <topic>logs</topic>
-        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.HostNameKeyingStrategy" />
-        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
+        <keyingStrategy class="ch.davidepedone.logback.kafka.keying.HostNameKeyingStrategy" />
+        <deliveryStrategy class="ch.davidepedone.logback.kafka.delivery.AsynchronousDeliveryStrategy" />
 
-        <producerConfig>bootstrap.servers=localhost:9092</producerConfig>
+        <producerConfig>bootstrap.servers=localhost:${KAFKA_BROKER_PORT}</producerConfig>
     </appender>
     <logger name="LogbackIntegrationIT" additivity="false" level="info">
         <appender-ref ref="KafkaAppender"/>
