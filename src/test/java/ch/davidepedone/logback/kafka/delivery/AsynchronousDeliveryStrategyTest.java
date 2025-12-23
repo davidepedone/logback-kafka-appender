@@ -39,11 +39,11 @@ public class AsynchronousDeliveryStrategyTest {
 
 	@Test
 	public void testCallbackWillNotTriggerOnFailedDeliveryOnNoException() {
-		final ProducerRecord<String, String> record = new ProducerRecord<>("topic", 0, null, "msg");
-		unit.send(producer, record, "msg", failedDeliveryCallback);
+		final ProducerRecord<String, String> producerRecord = new ProducerRecord<>("topic", 0, null, "msg");
+		unit.send(producer, producerRecord, "msg", failedDeliveryCallback);
 
 		final ArgumentCaptor<Callback> callbackCaptor = ArgumentCaptor.forClass(Callback.class);
-		verify(producer).send(Mockito.refEq(record), callbackCaptor.capture());
+		verify(producer).send(Mockito.refEq(producerRecord), callbackCaptor.capture());
 
 		final Callback callback = callbackCaptor.getValue();
 		callback.onCompletion(recordMetadata, null);
@@ -54,11 +54,11 @@ public class AsynchronousDeliveryStrategyTest {
 	@Test
 	public void testCallbackWillTriggerOnFailedDeliveryOnException() {
 		final IOException exception = new IOException("KABOOM");
-		final ProducerRecord<String, String> record = new ProducerRecord<>("topic", 0, null, "msg");
-		unit.send(producer, record, "msg", failedDeliveryCallback);
+		final ProducerRecord<String, String> producerRecord = new ProducerRecord<>("topic", 0, null, "msg");
+		unit.send(producer, producerRecord, "msg", failedDeliveryCallback);
 
 		final ArgumentCaptor<Callback> callbackCaptor = ArgumentCaptor.forClass(Callback.class);
-		verify(producer).send(Mockito.refEq(record), callbackCaptor.capture());
+		verify(producer).send(Mockito.refEq(producerRecord), callbackCaptor.capture());
 
 		final Callback callback = callbackCaptor.getValue();
 		callback.onCompletion(recordMetadata, exception);
@@ -69,11 +69,11 @@ public class AsynchronousDeliveryStrategyTest {
 	@Test
 	public void testCallbackWillTriggerOnFailedDeliveryOnProducerSendTimeout() {
 		final TimeoutException exception = new TimeoutException("miau");
-		final ProducerRecord<String, String> record = new ProducerRecord<>("topic", 0, null, "msg");
+		final ProducerRecord<String, String> producerRecord = new ProducerRecord<>("topic", 0, null, "msg");
 
-		when(producer.send(same(record), any(Callback.class))).thenThrow(exception);
+		when(producer.send(same(producerRecord), any(Callback.class))).thenThrow(exception);
 
-		unit.send(producer, record, "msg", failedDeliveryCallback);
+		unit.send(producer, producerRecord, "msg", failedDeliveryCallback);
 
 		verify(failedDeliveryCallback).onFailedDelivery(eq("msg"), same(exception));
 	}

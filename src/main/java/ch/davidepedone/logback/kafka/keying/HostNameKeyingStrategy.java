@@ -22,6 +22,8 @@ public class HostNameKeyingStrategy extends ContextAwareBase implements KeyingSt
 
 	private boolean errorWasShown = false;
 
+    private boolean started = false;
+
 	@Override
 	public void setContext(Context context) {
 		super.setContext(context);
@@ -42,13 +44,15 @@ public class HostNameKeyingStrategy extends ContextAwareBase implements KeyingSt
 		return hostnameHash;
 	}
 
-	@Override
-	public void start() {
-	}
+    @Override
+    public void start() {
+        started = true;
+    }
 
-	@Override
+    @Override
 	public void stop() {
-		errorWasShown = false;
+		started = false;
+        errorWasShown = false;
 	}
 
 	@Override

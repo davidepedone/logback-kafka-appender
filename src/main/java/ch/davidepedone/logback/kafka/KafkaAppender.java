@@ -38,7 +38,7 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 	@Override
 	public void doAppend(E e) {
 		ensureDeferredAppends();
-		if (e instanceof ILoggingEvent && ((ILoggingEvent) e).getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
+		if (e instanceof ILoggingEvent event && event.getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
 			deferAppend(e);
 		}
 		else {
@@ -117,11 +117,11 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 
 		final Long timestamp = isAppendTimestamp() ? getTimestamp(e) : null;
 
-		final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, partition, timestamp, key, payload);
+		final ProducerRecord<byte[], byte[]> producerRecord = new ProducerRecord<>(topic, partition, timestamp, key, payload);
 
 		final Producer<byte[], byte[]> producer = lazyProducer.get();
 		if (producer != null) {
-			deliveryStrategy.send(lazyProducer.get(), record, e, failedDeliveryCallback);
+			deliveryStrategy.send(lazyProducer.get(), producerRecord, e, failedDeliveryCallback);
 		}
 		else {
 			failedDeliveryCallback.onFailedDelivery(e, null);
@@ -162,7 +162,7 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 	 */
 	private class LazyProducer {
 
-		private volatile Producer<byte[], byte[]> producer;
+		private Producer<byte[], byte[]> producer;
 
 		public Producer<byte[], byte[]> get() {
 			Producer<byte[], byte[]> result = this.producer;
@@ -179,14 +179,14 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 		}
 
 		protected Producer<byte[], byte[]> initialize() {
-			Producer<byte[], byte[]> producer = null;
+			Producer<byte[], byte[]> p = null;
 			try {
-				producer = createProducer();
+				p = createProducer();
 			}
 			catch (Exception e) {
 				addError("error creating producer", e);
 			}
-			return producer;
+			return p;
 		}
 
 		public boolean isInitialized() {
