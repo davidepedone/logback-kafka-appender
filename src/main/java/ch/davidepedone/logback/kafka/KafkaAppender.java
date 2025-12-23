@@ -117,7 +117,8 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 
 		final Long timestamp = isAppendTimestamp() ? getTimestamp(e) : null;
 
-		final ProducerRecord<byte[], byte[]> producerRecord = new ProducerRecord<>(topic, partition, timestamp, key, payload);
+		final ProducerRecord<byte[], byte[]> producerRecord = new ProducerRecord<>(topic, partition, timestamp, key,
+				payload);
 
 		final Producer<byte[], byte[]> producer = lazyProducer.get();
 		if (producer != null) {
