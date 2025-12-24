@@ -11,7 +11,6 @@ import org.apache.kafka.common.KafkaException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @since 0.0.1
@@ -23,27 +22,20 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 	 * of any Kafka logs since it could cause harmful infinite recursion/self feeding
 	 * effects.
 	 */
-	private static final String KAFKA_LOGGER_PREFIX = KafkaProducer.class.getPackage()
-		.getName()
-		.replaceFirst("\\.producer$", "");
+	private static final String KAFKA_LOGGER_PREFIX = "org.apache.kafka";
 
 	private LazyProducer lazyProducer = null;
 
 	private final AppenderAttachableImpl<E> aai = new AppenderAttachableImpl<>();
 
-	private final ConcurrentLinkedQueue<E> queue = new ConcurrentLinkedQueue<>();
-
 	private final FailedDeliveryCallback<E> failedDeliveryCallback = (evt, throwable) -> aai.appendLoopOnAppenders(evt);
 
 	@Override
 	public void doAppend(E e) {
-		ensureDeferredAppends();
-		if (e instanceof ILoggingEvent && ((ILoggingEvent) e).getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
-			deferAppend(e);
+		if (e instanceof ILoggingEvent event && event.getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
+			return;
 		}
-		else {
-			super.doAppend(e);
-		}
+		super.doAppend(e);
 	}
 
 	@Override
@@ -117,11 +109,12 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 
 		final Long timestamp = isAppendTimestamp() ? getTimestamp(e) : null;
 
-		final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, partition, timestamp, key, payload);
+		final ProducerRecord<byte[], byte[]> producerRecord = new ProducerRecord<>(topic, partition, timestamp, key,
+				payload);
 
 		final Producer<byte[], byte[]> producer = lazyProducer.get();
 		if (producer != null) {
-			deliveryStrategy.send(lazyProducer.get(), record, e, failedDeliveryCallback);
+			deliveryStrategy.send(lazyProducer.get(), producerRecord, e, failedDeliveryCallback);
 		}
 		else {
 			failedDeliveryCallback.onFailedDelivery(e, null);
@@ -141,19 +134,6 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 		return new KafkaProducer<>(new HashMap<>(producerConfig));
 	}
 
-	private void deferAppend(E event) {
-		queue.add(event);
-	}
-
-	// drains queue events to super
-	private void ensureDeferredAppends() {
-		E event;
-
-		while ((event = queue.poll()) != null) {
-			super.doAppend(event);
-		}
-	}
-
 	/**
 	 * Lazy initializer for producer, patterned after commons-lang.
 	 *
@@ -162,7 +142,7 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 	 */
 	private class LazyProducer {
 
-		private volatile Producer<byte[], byte[]> producer;
+		private Producer<byte[], byte[]> producer;
 
 		public Producer<byte[], byte[]> get() {
 			Producer<byte[], byte[]> result = this.producer;
@@ -179,14 +159,14 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 		}
 
 		protected Producer<byte[], byte[]> initialize() {
-			Producer<byte[], byte[]> producer = null;
+			Producer<byte[], byte[]> p = null;
 			try {
-				producer = createProducer();
+				p = createProducer();
 			}
 			catch (Exception e) {
 				addError("error creating producer", e);
 			}
-			return producer;
+			return p;
 		}
 
 		public boolean isInitialized() {

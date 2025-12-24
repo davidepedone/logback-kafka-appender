@@ -62,19 +62,17 @@ public abstract class KafkaAppenderConfig<E> extends UnsynchronizedAppenderBase<
 			deliveryStrategy = new AsynchronousDeliveryStrategy();
 		}
 
-		if (producerConfig.get(KEY_SERIALIZER_CLASS_CONFIG) == null) {
+		producerConfig.computeIfAbsent(KEY_SERIALIZER_CLASS_CONFIG, k -> {
 			addInfo("No explicit key.serializer set for the appender named [\"" + name
 					+ "\"]. Using default ByteArraySerializer.");
-			producerConfig.put(KEY_SERIALIZER_CLASS_CONFIG,
-					org.apache.kafka.common.serialization.ByteArraySerializer.class.getName());
-		}
+			return org.apache.kafka.common.serialization.ByteArraySerializer.class.getName();
+		});
 
-		if (producerConfig.get(VALUE_SERIALIZER_CLASS_CONFIG) == null) {
+		producerConfig.computeIfAbsent(VALUE_SERIALIZER_CLASS_CONFIG, k -> {
 			addInfo("No explicit value.serializer set for the appender named [\"" + name
 					+ "\"]. Using default ByteArraySerializer.");
-			producerConfig.put(VALUE_SERIALIZER_CLASS_CONFIG,
-					org.apache.kafka.common.serialization.ByteArraySerializer.class.getName());
-		}
+			return org.apache.kafka.common.serialization.ByteArraySerializer.class.getName();
+		});
 
 		return errorFree;
 	}
