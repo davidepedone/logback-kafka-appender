@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.davidepedone</groupId>
     <artifactId>logback-kafka-appender</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Logback kafka appender</name>
     <description>Logback kafka appender</description>
     <url>https://github.com/davidepedone/logback-kafka-appender</url>
@@ -51,7 +51,7 @@
         <connection>scm:git:git@github.com:davidepedone/logback-kafka-appender.git</connection>
         <developerConnection>scm:git:git@github.com:davidepedone/logback-kafka-appender.git</developerConnection>
         <url>git@github.com:davidepedone/logback-kafka-appender.git</url>
-        <tag>HEAD</tag>
+        <tag>v1.0.0</tag>
     </scm>
 
     <developers>
