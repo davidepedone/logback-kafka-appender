@@ -11,7 +11,6 @@ import org.apache.kafka.common.KafkaException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @since 0.0.1
@@ -23,27 +22,20 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 	 * of any Kafka logs since it could cause harmful infinite recursion/self feeding
 	 * effects.
 	 */
-	private static final String KAFKA_LOGGER_PREFIX = KafkaProducer.class.getPackage()
-		.getName()
-		.replaceFirst("\\.producer$", "");
+	private static final String KAFKA_LOGGER_PREFIX = "org.apache.kafka";
 
 	private LazyProducer lazyProducer = null;
 
 	private final AppenderAttachableImpl<E> aai = new AppenderAttachableImpl<>();
 
-	private final ConcurrentLinkedQueue<E> queue = new ConcurrentLinkedQueue<>();
-
 	private final FailedDeliveryCallback<E> failedDeliveryCallback = (evt, throwable) -> aai.appendLoopOnAppenders(evt);
 
 	@Override
 	public void doAppend(E e) {
-		ensureDeferredAppends();
 		if (e instanceof ILoggingEvent event && event.getLoggerName().startsWith(KAFKA_LOGGER_PREFIX)) {
-			deferAppend(e);
+			return;
 		}
-		else {
-			super.doAppend(e);
-		}
+		super.doAppend(e);
 	}
 
 	@Override
@@ -140,19 +132,6 @@ public class KafkaAppender<E> extends KafkaAppenderConfig<E> {
 
 	protected Producer<byte[], byte[]> createProducer() {
 		return new KafkaProducer<>(new HashMap<>(producerConfig));
-	}
-
-	private void deferAppend(E event) {
-		queue.add(event);
-	}
-
-	// drains queue events to super
-	private void ensureDeferredAppends() {
-		E event;
-
-		while ((event = queue.poll()) != null) {
-			super.doAppend(event);
-		}
 	}
 
 	/**

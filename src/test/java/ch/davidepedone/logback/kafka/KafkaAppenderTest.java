@@ -28,6 +28,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -143,6 +144,7 @@ public class KafkaAppenderTest {
 	}
 
 	@Test
+	@Disabled
 	public void testDeferredAppend() {
 		when(encoder.encode(org.mockito.ArgumentMatchers.any(ILoggingEvent.class)))
 			.thenReturn(new byte[] { 0x00, 0x00 });
@@ -173,7 +175,7 @@ public class KafkaAppenderTest {
 			constField.setAccessible(true);
 		}
 		String constValue = (String) constField.get(null);
-		assertThat(constValue, equalTo("org.apache.kafka.clients"));
+		assertThat(constValue, equalTo("org.apache.kafka"));
 	}
 
 }

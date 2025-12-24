@@ -1,9 +1,5 @@
 # logback-kafka-appender
 
-> **Archive Warning**:
-> This project is no longer maintained (actually for some time now). I just do not find time to maintain this project in my free time. To make this clear I decided to better archive this project on github (and closing the unmoderated gitter channel) instead of just not reacting to new questions, issues and PRs. This may influence your decision to use this project although there still seem to be some happy users and stargazers.
-> I'll be happy to unarchive this project if someone is willing to take over maintenance or link to an active fork. 
-
 [![Maven Status](https://maven-badges.sml.io/sonatype-central/ch.davidepedone/logback-kafka-appender/badge.svg)](http://mvnrepository.com/artifact/ch.davidepedone/logback-kafka-appender)
 [![Java CI with Maven](https://github.com/davidepedone/logback-kafka-appender/actions/workflows/maven.yml/badge.svg)](https://github.com/davidepedone/logback-kafka-appender/actions/workflows/maven.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=davidepedone_logback-kafka-appender&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=davidepedone_logback-kafka-appender)
@@ -13,9 +9,10 @@
 
 This appender lets your application publish its application logs directly to Apache Kafka.
 
-## Logback incompatibility Warning 
-
-__Due to a breaking change in the Logback Encoder API you need to use at least logback version 1.2.__
+## Why this fork
+Using this library in a SpringBoot project suddenly stopped working (preventing the application to start) after SpringBoot upgrade to 3.5.8. The issue is due to
+the fact that kafka producer uses logger during creation, so as a quick&dirty workaround all logs from package `org.apache.kafka` will be ignored by this appender. I will look for a more nice solution asap, 
+for now this change will allow the SpringBoot (and kafka-clients) upgrade.
 
 ## Full configuration example
 
@@ -24,9 +21,9 @@ Add `logback-kafka-appender` and `logback-classic` as library dependencies to yo
 ```xml
 [maven pom.xml]
 <dependency>
-    <groupId>com.github.danielwegener</groupId>
+    <groupId>ch.davidepedone</groupId>
     <artifactId>logback-kafka-appender</artifactId>
-    <version>0.2.0</version>
+    <version>1.0.0</version>
     <scope>runtime</scope>
 </dependency>
 <dependency>
@@ -39,7 +36,7 @@ Add `logback-kafka-appender` and `logback-classic` as library dependencies to yo
 
 ```scala
 // [build.sbt]
-libraryDependencies += "com.github.danielwegener" % "logback-kafka-appender" % "0.2.0"
+libraryDependencies += "ch.davidepedone" % "logback-kafka-appender" % "1.0.0"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.3"
 ```
 
@@ -90,7 +87,7 @@ You may also look at the [complete configuration examples](src/example/resources
 
 ### Compatibility
 
-logback-kafka-appender depends on `org.apache.kafka:kafka-clients:1.0.0:jar`. It can append logs to a kafka broker with version 0.9.0.0 or higher.
+logback-kafka-appender depends on `org.apache.kafka:kafka-clients:4.1.1:jar`. It can append logs to a kafka broker with version 0.9.0.0 or higher.
 
 The dependency to kafka-clients is not shadowed and may be upgraded to a higher, api compatible, version through dependency overrides.
 
@@ -103,7 +100,6 @@ You need make a essential decision: Is it more important to deliver all logs to 
 | Strategy   | Description  |
 |---|---|
 | `AsynchronousDeliveryStrategy` | Dispatches each log message to the `Kafka Producer`. If the delivery fails for some reasons, the message is dispatched to the fallback appenders. However, this DeliveryStrategy _does_ block if the producers send buffer is full (this can happen if the connection to the broker gets lost). To avoid even this blocking, enable the producerConfig `block.on.buffer.full=false`. All log messages that cannot be delivered fast enough will then immediately go to the fallback appenders. |
-| `BlockingDeliveryStrategy` | Blocks each calling thread until the log message is actually delivered. Normally this strategy is discouraged because it has a huge negative impact on throughput. __Warning: This strategy should not be used together with the producerConfig `linger.ms`__  |
 
 #### Note on Broker outages
 
@@ -137,7 +133,7 @@ An example configuration could look like this:
 
 #### Custom delivery strategies
 
-You may also roll your own delivery strategy. Just extend `com.github.danielwegener.logback.kafka.delivery.DeliveryStrategy`.
+You may also roll your own delivery strategy. Just extend `ch.davidepedone.logback.kafka.delivery.DeliveryStrategy`.
 
 #### Fallback-Appender
 

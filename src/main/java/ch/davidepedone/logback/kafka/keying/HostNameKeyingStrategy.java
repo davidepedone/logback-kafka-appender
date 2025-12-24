@@ -57,7 +57,7 @@ public class HostNameKeyingStrategy extends ContextAwareBase implements KeyingSt
 
 	@Override
 	public boolean isStarted() {
-		return true;
+		return started;
 	}
 
 }
